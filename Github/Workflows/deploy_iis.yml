@@ -1,0 +1,56 @@
+﻿name: Build and Deploy ASP.NET MVC to IIS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0'
+
+    - name: Restore Dependencies
+      run: dotnet restore
+
+    - name: Build Application
+      run: dotnet build --configuration Release
+
+    - name: Publish Application
+      run: dotnet publish -c Release -o ./publish
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mvcapp
+        path: ./publish
+
+
+  deploy:
+
+    needs: build
+
+    runs-on: windows-latest
+
+    steps:
+
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: mvcapp
+        path: ./publish
+
+    - name: Deploy to IIS
+      run: |
+        echo Deploying to IIS Server
+        robocopy ./publish \\${{ secrets.IIS_SERVER }}\c$\inetpub\MyMvcApp /MIR
