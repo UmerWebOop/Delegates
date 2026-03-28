@@ -27,6 +27,6 @@ jobs:
             fi
 
             dotnet restore
-            dotnet publish -c Release -o /var/www/myapp/publish
+            dotnet publish -c Release -o /var/www/myapp
 
             sudo systemctl restart myapp
