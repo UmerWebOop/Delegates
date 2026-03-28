@@ -1,0 +1,32 @@
+﻿name: Build and Deploy ASP.NET MVC to IIS
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/myapp
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/UmerWebOop/Delegates.git .
+            else
+              git pull origin main
+            fi
+
+            dotnet restore
+            dotnet publish -c Release -o /var/www/myapp/publish
+
+            sudo systemctl restart myapp
