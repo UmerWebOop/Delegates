@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include=".github\Workflows\deploy_iis.yml" />
+  </ItemGroup>
+
 </Project>
