@@ -2,55 +2,31 @@
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
-
-  build:
-
-    runs-on: windows-latest
-
-    steps:
-
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0'
-
-    - name: Restore Dependencies
-      run: dotnet restore
-
-    - name: Build Application
-      run: dotnet build --configuration Release
-
-    - name: Publish Application
-      run: dotnet publish -c Release -o ./publish
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: mvcapp
-        path: ./publish
-
-
   deploy:
-
-    needs: build
-
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: mvcapp
-        path: ./publish
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /var/www/myapp
+            if [ ! -d ".git" ]; then
+              git clone git@github.com:your-username/your-repo.git .
+            else
+              git pull origin main
+            fi
 
-    - name: Deploy to IIS
-      run: |
-        echo Deploying to IIS Server
-        robocopy ./publish \\${{ secrets.IIS_SERVER }}\c$\inetpub\MyMvcApp /MIR
+            dotnet restore
+            dotnet publish -c Release -o /var/www/myapp/publish
+
+            sudo systemctl restart myapp
